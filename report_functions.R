@@ -2,81 +2,101 @@ library(officer)
 library(dplyr)
 
 #' Add a Title Slide
-#' Uses 'Title Slide' layout
 #' @param doc officer::rdocx object
 #' @param title Main title string
 #' @param subtitle Subtitle string
-add_title_slide <- function(doc, title, subtitle = "") {
+#' @param layout Name of the layout to use (default: "Title Slide")
+#' @param master Name of the master to use (default: "Office Theme")
+add_title_slide <- function(doc, title, subtitle = "", layout = "Title Slide", master = "Office Theme") {
   doc |>
-    add_slide(layout = "Title Slide", master = "Office Theme") |>
+    add_slide(layout = layout, master = master) |>
     ph_with(value = title, location = ph_location_type(type = "ctrTitle")) |>
     ph_with(value = subtitle, location = ph_location_type(type = "subTitle"))
 }
 
 #' Add a Section Header Slide
-#' Uses 'Section Header' layout
 #' @param doc officer::rdocx object
 #' @param title Section title string
-add_section_header <- function(doc, title) {
+#' @param layout Name of the layout to use (default: "Section Header")
+#' @param master Name of the master to use (default: "Office Theme")
+add_section_header <- function(doc, title, layout = "Section Header", master = "Office Theme") {
   doc |>
-    add_slide(layout = "Section Header", master = "Office Theme") |>
+    add_slide(layout = layout, master = master) |>
     ph_with(value = title, location = ph_location_type(type = "title"))
 }
 
 #' Add a Two Content Slide (Chart Left, Text Right)
-#' Uses 'Two Content' layout
 #' @param doc officer::rdocx object
 #' @param title Slide title
 #' @param left_content Object for left placeholder (plot, table, text)
 #' @param right_content Object for right placeholder (plot, table, text)
-add_two_content_slide <- function(doc, title, left_content, right_content) {
+#' @param layout Name of the layout to use (default: "Two Content")
+#' @param master Name of the master to use (default: "Office Theme")
+#' @param left_ph_label Label for left content placeholder
+#' @param right_ph_label Label for right content placeholder
+add_two_content_slide <- function(doc, title, left_content, right_content, 
+                                 layout = "Two Content", master = "Office Theme",
+                                 left_ph_label = "Content Placeholder 2",
+                                 right_ph_label = "Content Placeholder 3") {
   doc |>
-    add_slide(layout = "Two Content", master = "Office Theme") |>
+    add_slide(layout = layout, master = master) |>
     ph_with(value = title, location = ph_location_type(type = "title")) |>
-    ph_with(value = left_content, location = ph_location_label(ph_label = "Content Placeholder 2")) |>
-    ph_with(value = right_content, location = ph_location_label(ph_label = "Content Placeholder 3"))
+    ph_with(value = left_content, location = ph_location_label(ph_label = left_ph_label)) |>
+    ph_with(value = right_content, location = ph_location_label(ph_label = right_ph_label))
 }
 
 #' Add a Comparison Slide (Title + Left/Right Headers + Left/Right Content)
-#' Uses 'Comparison' layout
 #' @param doc officer::rdocx object
 #' @param title Slide title
 #' @param left_header Text for left header
 #' @param right_header Text for right header
 #' @param left_content Object for left body
 #' @param right_content Object for right body
-add_comparison_slide <- function(doc, title, left_header, right_header, left_content, right_content) {
+#' @param layout Name of the layout to use (default: "Comparison")
+#' @param master Name of the master to use (default: "Office Theme")
+#' @param left_head_ph_label Label for left header placeholder
+#' @param right_head_ph_label Label for right header placeholder
+#' @param left_cont_ph_label Label for left content placeholder
+#' @param right_cont_ph_label Label for right content placeholder
+add_comparison_slide <- function(doc, title, left_header, right_header, left_content, right_content,
+                                layout = "Comparison", master = "Office Theme",
+                                left_head_ph_label = "Text Placeholder 2",
+                                right_head_ph_label = "Text Placeholder 4",
+                                left_cont_ph_label = "Content Placeholder 3",
+                                right_cont_ph_label = "Content Placeholder 5") {
   doc |>
-    add_slide(layout = "Comparison", master = "Office Theme") |>
+    add_slide(layout = layout, master = master) |>
     ph_with(value = title, location = ph_location_type(type = "title")) |>
     # Headers
-    ph_with(value = left_header, location = ph_location_label(ph_label = "Text Placeholder 2")) |>
-    ph_with(value = right_header, location = ph_location_label(ph_label = "Text Placeholder 4")) |>
+    ph_with(value = left_header, location = ph_location_label(ph_label = left_head_ph_label)) |>
+    ph_with(value = right_header, location = ph_location_label(ph_label = right_head_ph_label)) |>
     # Bodies
-    ph_with(value = left_content, location = ph_location_label(ph_label = "Content Placeholder 3")) |>
-    ph_with(value = right_content, location = ph_location_label(ph_label = "Content Placeholder 5"))
+    ph_with(value = left_content, location = ph_location_label(ph_label = left_cont_ph_label)) |>
+    ph_with(value = right_content, location = ph_location_label(ph_label = right_cont_ph_label))
 }
 
 #' Add a Full Content Slide (Title + Single Large Content)
-#' Uses 'Title and Content' layout
 #' @param doc officer::rdocx object
 #' @param title Slide title
 #' @param content Object for the main placeholder
-add_full_content_slide <- function(doc, title, content) {
+#' @param layout Name of the layout to use (default: "Title and Content")
+#' @param master Name of the master to use (default: "Office Theme")
+add_full_content_slide <- function(doc, title, content, layout = "Title and Content", master = "Office Theme") {
   doc |>
-    add_slide(layout = "Title and Content", master = "Office Theme") |>
+    add_slide(layout = layout, master = master) |>
     ph_with(value = title, location = ph_location_type(type = "title")) |>
     ph_with(value = content, location = ph_location_type(type = "body"))
 }
 
 #' Add a Summary Slide
-#' Uses 'Title Only' layout and adds a large text body
 #' @param doc officer::rdocx object
 #' @param title Slide title
 #' @param text Large text content
-add_summary_slide <- function(doc, title, text) {
+#' @param layout Name of the layout to use (default: "Title Only")
+#' @param master Name of the master to use (default: "Office Theme")
+add_summary_slide <- function(doc, title, text, layout = "Title Only", master = "Office Theme") {
   doc |>
-    add_slide(layout = "Title Only", master = "Office Theme") |>
+    add_slide(layout = layout, master = master) |>
     ph_with(value = title, location = ph_location_type(type = "title")) |>
     ph_with(value = text, location = ph_location(left = 1, top = 2, width = 8, height = 2))
 }

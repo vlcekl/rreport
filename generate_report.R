@@ -151,9 +151,18 @@ doc <- add_comparison_slide(doc,
   right_content = ft_comp
 )
 
-doc <- add_full_content_slide(doc,
+  doc <- add_full_content_slide(doc,
   title = "Detailed Product Revenue & Growth",
   content = ft_full
+)
+
+# 5. Demonstration of generalized parameters
+# Here we explicitly pass the layout and master, which allows using custom templates easily.
+doc <- add_summary_slide(doc,
+  title = "Generalized Function Demo",
+  text = "This slide was added by explicitly passing layout and master names to the function.",
+  layout = "Title Only",
+  master = "Office Theme"
 )
 
 # Save Report
