@@ -8,7 +8,8 @@ It supports advanced features like formatted tables (`flextable`), editable vect
 | File | Description |
 | :--- | :--- |
 | **`create_template.R`** | Generates the base `template.pptx` using `officer` defaults. Use this to create a starter file you can customize. |
-| **`generate_report.R`** | The main script. Generates the final `report.pptx` with plots, tables, and text. |
+| **`generate_report.R`** | The main script. Sources `report_functions.R` and orchestrates the report generation. |
+| **`report_functions.R`** | Contains modular helper functions (`add_title_slide`, `add_comparison_slide`, etc.) to handle different layouts. |
 | **`inspect_template.R`** | A helper script to inspect any `.pptx` file to find Layout Names and Placeholder Labels. |
 
 ## Usage
