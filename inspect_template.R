@@ -1,9 +1,15 @@
 library(officer)
 library(dplyr)
 
+# Set console width to prevent table wrapping
+options(width = 200)
+
+# Source the modular functions
+source("report_functions.R")
+
 # --- Configuration ---
 # Change this to the path of your existing PowerPoint file
-target_pptx <- "template.pptx" 
+target_pptx <- "report.pptx" 
 
 # --- Inspection Script ---
 
@@ -17,7 +23,7 @@ cat(paste("Inspecting:", target_pptx, "\n\n"))
 
 # 1. List all available Layouts and Masters
 cat("=== Available Layouts and Masters ===\n")
-summary <- layout_summary(doc)
+summary <- get_layout_summary(doc)
 print(summary)
 
 cat("\n------------------------------------------------\n")
@@ -25,21 +31,23 @@ cat("To use a layout in add_slide(), you need the 'layout' and 'master' names fr
 cat("Example: add_slide(layout = '", summary$layout[1], "', master = '", summary$master[1], "')\n", sep = "")
 cat("------------------------------------------------\n\n")
 
-# 2. Detailed Placeholder View (Optional)
-# If you know the layout name you want to use, change it here to see its placeholders (index, label, type)
-target_layout <- "Two Content" # Change this to your desired layout name
+# 3. Slide-by-Slide Inventory
+cat("\n=== Slide-by-Slide Inventory ===\n")
 
-if (target_layout %in% summary$layout) {
-  cat(paste("=== Placeholders for layout:", target_layout, "===\n"))
-  props <- layout_properties(doc, layout = target_layout)
-  
-  # Select relevant columns for readability
-  props_clean <- props |> 
-    select(label = ph_label, type, index = id, master_name)
-    
-  print(props_clean)
-  
-  cat("\nTip: Use 'ph_location_label(ph_label = ...)' to target specific placeholders.\n")
+inventory_clean <- get_slide_inventory(doc)
+
+if (!is.null(inventory_clean)) {
+  # Ensure all columns are printed in a single row without row numbers
+  if (inherits(inventory_clean, "tbl_df")) {
+    # Tibbles don't have row names, but they show row numbers in some environments.
+    # Converting to data.frame and setting row.names to FALSE is a reliable way.
+    print(as.data.frame(inventory_clean), row.names = FALSE, right = FALSE)
+  } else {
+    print(inventory_clean, row.names = FALSE, right = FALSE)
+  }
 } else {
-  cat(paste("Layout '", target_layout, "' not found in this presentation.\n", sep=""))
+  cat("No slides found in this presentation.\n")
 }
+
+cat("\nTip: Use 'inspect_template.R' to identify exactly which layouts are being used in an existing presentation.\n")
+

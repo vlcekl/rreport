@@ -100,3 +100,52 @@ add_summary_slide <- function(doc, title, text, layout = "Title Only", master = 
     ph_with(value = title, location = ph_location_type(type = "title")) |>
     ph_with(value = text, location = ph_location(left = 1, top = 2, width = 8, height = 2))
 }
+
+#' Get Layout Summary from a PowerPoint object
+#' @param doc officer::rdocx object
+#' @return A data frame with layout and master names
+get_layout_summary <- function(doc) {
+  layout_summary(doc)
+}
+
+#' Get a detailed Slide Inventory from a PowerPoint object
+#' @param doc officer::rdocx object
+#' @return A data frame with slide index, layout, master, and title
+get_slide_inventory <- function(doc) {
+  # Get slide and layout metadata
+  slide_md <- doc$slide$get_metadata()
+  
+  if (is.null(slide_md) || nrow(slide_md) == 0) {
+    return(NULL)
+  }
+  
+  layout_md <- doc$slideLayouts$get_metadata()
+  
+  # Prepare for merging
+  slide_md$layout_filename <- basename(slide_md$layout_file)
+  
+  # Merge to get layout names
+  inventory <- slide_md |>
+    left_join(layout_md |> select(layout_name = name, filename, master_name), 
+              by = c("layout_filename" = "filename")) |>
+    select(slide_name = name, layout_name, master_name) |>
+    mutate(index = row_number())
+  
+  # Function to safely get title from a slide
+  get_slide_title <- function(doc, index) {
+    sm <- slide_summary(doc, index = index)
+    title_ph <- sm |> filter(type %in% c("title", "ctrTitle"))
+    if (nrow(title_ph) > 0) {
+      return(title_ph$text[1])
+    } else {
+      return("(No Title)")
+    }
+  }
+  
+  # Collect titles
+  inventory$title <- sapply(1:nrow(inventory), function(i) get_slide_title(doc, i))
+  
+  # Select clean columns for output
+  inventory |>
+    select(index, layout_name, master_name, title)
+}
