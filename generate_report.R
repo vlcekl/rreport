@@ -1,9 +1,9 @@
-library(officer)
-library(ggplot2)
-library(dplyr)
-library(flextable)
-library(rvg)
-library(patchwork)
+suppressPackageStartupMessages(library(officer))
+suppressPackageStartupMessages(library(ggplot2))
+suppressPackageStartupMessages(library(dplyr))
+suppressPackageStartupMessages(library(flextable))
+suppressPackageStartupMessages(library(rvg))
+suppressPackageStartupMessages(library(patchwork))
 
 # Source the modular functions
 source("report_functions.R")

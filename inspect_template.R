@@ -1,5 +1,5 @@
-library(officer)
-library(dplyr)
+suppressPackageStartupMessages(library(officer))
+suppressPackageStartupMessages(library(dplyr))
 
 # Set console width to prevent table wrapping
 options(width = 200)

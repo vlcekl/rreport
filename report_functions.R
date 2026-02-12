@@ -1,5 +1,5 @@
-library(officer)
-library(dplyr)
+suppressPackageStartupMessages(library(officer))
+suppressPackageStartupMessages(library(dplyr))
 
 #' Add a Title Slide
 #' @param doc officer::rdocx object
