@@ -7,9 +7,9 @@ options(width = 200)
 # Source the modular functions
 source("report_functions.R")
 
-# --- Configuration ---
-# Change this to the path of your existing PowerPoint file
-target_pptx <- "report.pptx" 
+# --- Argument Handling ---
+args <- commandArgs(trailingOnly = TRUE)
+target_pptx <- if (length(args) > 0) args[1] else "report.pptx" 
 
 # --- Inspection Script ---
 
