@@ -1,5 +1,4 @@
 suppressPackageStartupMessages(library(officer))
-suppressPackageStartupMessages(library(dplyr))
 
 # --- Argument Handling ---
 args <- commandArgs(trailingOnly = TRUE)

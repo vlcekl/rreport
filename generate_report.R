@@ -1,12 +1,10 @@
-suppressPackageStartupMessages(library(officer))
+# Source the modular functions (provides officer, dplyr)
+source("report_functions.R")
+
 suppressPackageStartupMessages(library(ggplot2))
-suppressPackageStartupMessages(library(dplyr))
 suppressPackageStartupMessages(library(flextable))
 suppressPackageStartupMessages(library(rvg))
 suppressPackageStartupMessages(library(patchwork))
-
-# Source the modular functions
-source("report_functions.R")
 
 # Standard styling
 theme_set(theme_bw(base_size = 14) + 
@@ -71,7 +69,7 @@ p_line <- ggplot(line_data, aes(x = Time, y = Value)) +
 
 # Advanced Objects
 ft_comp <- flextable(comp_data) |> autofit()
-
+t
 ft_full <- flextable(product_data) |>
   colformat_double(j = "Revenue", digits = 0, prefix = "$") |>
   colformat_double(j = "Growth", digits = 1, suffix = "%") |>
