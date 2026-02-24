@@ -58,8 +58,13 @@ source "$VENV_DIR/bin/activate"
 
 # Ensure tool is installed
 if ! command -v pptx2md &> /dev/null; then
-    echo "Installing pptx2md..."
-    pip install pptx2md
+    if [ -f "requirements.txt" ]; then
+        echo "Installing dependencies from requirements.txt..."
+        pip install -r requirements.txt
+    else
+        echo "Installing pptx2md..."
+        pip install pptx2md
+    fi
 fi
 
 # --- 2. Conversion ---
