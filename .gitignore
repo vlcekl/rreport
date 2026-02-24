@@ -1,5 +1,8 @@
 *.pptx
 *.csv
+*.html
+
+presentation_files/
 
 .Rhistory
 .RData
