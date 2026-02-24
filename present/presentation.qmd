@@ -4,11 +4,11 @@ subtitle: "Full Distribution vs. Hurdle Models for Sales Strategy"
 format: 
   revealjs:
     theme: default
-    slide-number: true
+    slide-number: false
     preview-links: auto
   pptx:
     # Remove the '#' on the next line and point it to a corporate PPTX file to use its template
-    # reference-doc: my_corporate_template.pptx
+    # reference-doc: template.pptx
     slide-level: 2
 execute:
   echo: false
@@ -158,6 +158,7 @@ When we run our prediction model for an individual customer, the output isn't a 
 
 * The blended expected value ($E[Y] \approx `r round(exp_total, 1)`$) falls in a gap.
 * This customer will likely purchase around **`r round(exp_positive, 1)`** units, or they buy nothing.
+* *(Note: The solid spike shows the probability mass of churn, while the curve shows the density of order volumes for buyers.)*
 
 ```{r}
 #| fig-width: 9
@@ -217,6 +218,8 @@ Here is the danger of handing a sales rep a single 'expected value' to guide the
 
 By mapping the account health categories directly onto the separated distributions (assuming a baseline of 80 units), we can clearly see our primary risk is strictly conversion (churn).
 
+> **Bottom Line for Sales:** Blended models flag churn as 'Decline', leading to unnecessary volume discounts.
+
 ```{r}
 #| fig-width: 9
 #| fig-height: 4
@@ -231,10 +234,10 @@ ggplot() +
     geom_line(data = dens_df, aes(x = amount, y = density), color = "white", linewidth = 0.5) +
 
     # Text Overlays for Proportions (added white boxes for better contrast)
-    annotate("label", x = 0, y = spike_height * 0.5, label = percent(prop_churn, 1), color = "gray15", fill = "white", fontface = "bold", size = 4.5, label.size = 0, label.padding = unit(0.3, "lines")) +
-    annotate("label", x = last_year_val * 0.8, y = max_dens * 0.2, label = percent(prop_decline, 1), color = "gray15", fill = "white", fontface = "bold", size = 4.5, label.size = 0, label.padding = unit(0.3, "lines")) +
-    annotate("label", x = last_year_val, y = max_dens * 0.4, label = percent(prop_stable, 1), color = "gray15", fill = "white", fontface = "bold", size = 4.5, label.size = 0, label.padding = unit(0.3, "lines")) +
-    annotate("label", x = last_year_val * 1.25, y = max_dens * 0.2, label = percent(prop_growth, 1), color = "gray15", fill = "white", fontface = "bold", size = 4.5, label.size = 0, label.padding = unit(0.3, "lines")) +
+    annotate("label", x = 0, y = spike_height * 0.5, label = percent(prop_churn, accuracy = 1), color = "gray15", fill = "white", fontface = "bold", size = 4.5, label.size = 0, label.padding = unit(0.3, "lines")) +
+    annotate("label", x = last_year_val * 0.8, y = max_dens * 0.2, label = percent(prop_decline, accuracy = 1), color = "gray15", fill = "white", fontface = "bold", size = 4.5, label.size = 0, label.padding = unit(0.3, "lines")) +
+    annotate("label", x = last_year_val, y = max_dens * 0.4, label = percent(prop_stable, accuracy = 1), color = "gray15", fill = "white", fontface = "bold", size = 4.5, label.size = 0, label.padding = unit(0.3, "lines")) +
+    annotate("label", x = last_year_val * 1.25, y = max_dens * 0.2, label = percent(prop_growth, accuracy = 1), color = "gray15", fill = "white", fontface = "bold", size = 4.5, label.size = 0, label.padding = unit(0.3, "lines")) +
 
     # Apply the custom color palette
     scale_fill_manual(
@@ -263,6 +266,8 @@ Let's say this customer bought 80 units last year. How do we flag their account 
 
 
 ## The Illusion of Decline
+
+> **Bottom Line for Sales:** We don't have a systemic 'Decline' problem. Active buyers are healthy. Our only real problem is the 35% who churn entirely.
 
 :::: {.columns}
 
@@ -434,12 +439,12 @@ But when we map the two hurdle metrics into a matrix, it becomes a strategic gol
 
 ## Strategic Alignment
 
-| Feature | Full Distribution $E[Y]$ | Hurdle Separated $P(Y=0)$ & $E[Y|Y>0]$ |
+| Feature | ❌ Full Distribution $E[Y]$ | ✅ **Hurdle Separated $P(Y=0)$ & $E[Y|Y>0]$** |
 | :--- | :--- | :--- |
-| **Mathematical Reality** | Blends conversion risk with operational volume. | Isolates conversion probability from order magnitude. |
-| **Prediction Output** | A smoothed, blended volume that misrepresents the client. | Two distinct metrics: Likelihood to buy, and conditional volume. |
-| **Best Used For** | **Macro-level forecasting:** Aggregating total projected revenue across thousands of accounts. | **Micro-level execution:** Individual account planning, targeted marketing, and setting rep quotas. |
-| **The Risk** | Under-pitching actual buyers, or misinterpreting stable clients as shrinking. | Requires reps to manage two metrics instead of one. |
+| **Mathematical Reality** | Blends conversion risk with operational volume. | **Isolates conversion probability from order magnitude.** |
+| **Prediction Output** | A smoothed, blended volume that misrepresents the client. | **Two distinct metrics: Likelihood to buy, and conditional volume.** |
+| **Best Used For** | Macro-level forecasting: Aggregating total projected revenue across thousands of accounts. | **Micro-level execution:** Individual account planning, targeted marketing, and setting rep quotas. |
+| **The Risk** | Under-pitching actual buyers, or misinterpreting stable clients as shrinking. | **Requires reps to manage two metrics instead of one.** |
 
 ::: {.notes}
 Ultimately, these two mathematical approaches serve different masters. The Full Distribution is for the aggregate business—it is what our supply chain and finance teams use, because across thousands of customers, the individual churn probabilities smooth out into predictable revenue. But for Sales execution, we must use the Separated Hurdle approach. We need to arm our reps with two distinct metrics per account: the Conversion Risk to drive retention tactics, and the Conditional Volume to drive their quota and upsell targets.
