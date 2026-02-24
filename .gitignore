@@ -2,9 +2,9 @@
 *.csv
 *.html
 
-presentation_files/
-assets/
 README_files/
+/present/*_files/
+assets/
 
 .Rhistory
 .RData

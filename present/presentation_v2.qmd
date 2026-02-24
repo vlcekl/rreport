@@ -1,0 +1,458 @@
+---
+title: "Two-Stage Models Predict Individual Purchasing Behavior More Accurately"
+subtitle: "Separated Predictions vs. Combined Statistics for Sales Strategy"
+format: 
+  revealjs:
+    theme: default
+    slide-number: false
+    preview-links: auto
+  pptx:
+    # Remove the '#' on the next line and point it to a corporate PPTX file to use its template
+    # reference-doc: ../templates/template.pptx
+    slide-level: 2
+execute:
+  echo: false
+  warning: false
+  message: false
+---
+
+```{r}
+#| label: setup
+#| include: false
+
+# Load necessary libraries
+library(tidyverse)
+library(scales)
+library(ggrepel)
+
+# Set global ggplot text sizes (in mm) to match the PowerPoint target font size
+update_geom_defaults("text", list(size = 5.5))
+
+# Define the custom color palette
+my_colors <- c(
+    "Churn (Zero)" = "#D30F4B", # Raspberry
+    "Decline"      = "#443247", # Dark Purple
+    "Stable"       = "#00314E", # Dark Ocean Blue
+    "Growth"       = "#56D500", # Deep Chartreuse
+    "Capri"        = "#01BEFF" # Capri (Baseline)
+)
+
+# ---------------------------------------------------------
+# 1. Data Generation (Individual Customer Prediction Scenario)
+# ---------------------------------------------------------
+set.seed(42)
+n_simulations <- 10000
+prob_zero <- 0.35 # ~35% probability of No Purchase
+
+# Generate two-stage (0 or 1)
+bought_anything <- rbinom(n_simulations, 1, 1 - prob_zero)
+
+# Generate positive outcomes (normal around 80)
+positive_amounts <- rnorm(n_simulations, mean = 80, sd = 15)
+
+# Combine into a single predictive dataset
+df <- tibble(
+    bought = bought_anything == 1,
+    amount = ifelse(bought, positive_amounts, 0)
+)
+
+# ---------------------------------------------------------
+# 2. Key Metrics & Density Calculations
+# ---------------------------------------------------------
+p_zero <- mean(df$amount == 0)
+p_pos <- 1 - p_zero
+
+exp_total <- mean(df$amount) # E[Y]
+exp_positive <- mean(df$amount[df$amount > 0]) # E[Y|Y>0]
+
+# Spike dimensions (Area = p_zero)
+spike_width <- 4
+spike_height <- p_zero / spike_width
+
+# Positive density (Area = p_pos)
+pos_data <- df |>
+    filter(amount > 0) |>
+    pull(amount)
+dens <- density(pos_data, from = min(pos_data), to = max(pos_data))
+
+# Base density dataframe
+dens_df <- tibble(
+    amount = dens$x,
+    density = dens$y * p_pos
+)
+
+# Add classification categories directly to the density data
+last_year_val <- 80
+dens_df <- dens_df |>
+    mutate(
+        Category = case_when(
+            amount < (last_year_val * 0.95) ~ "Decline",
+            amount >= (last_year_val * 0.95) & amount <= (last_year_val * 1.05) ~ "Stable",
+            amount > (last_year_val * 1.05) ~ "Growth"
+        ),
+        Category = factor(Category, levels = c("Decline", "Stable", "Growth"))
+    )
+
+# Calculate exact proportions for text labels
+prop_churn <- p_zero
+prop_decline <- mean(df$amount > 0 & df$amount < (last_year_val * 0.95))
+prop_stable <- mean(df$amount >= (last_year_val * 0.95) & df$amount <= (last_year_val * 1.05))
+prop_growth <- mean(df$amount > (last_year_val * 1.05))
+max_dens <- max(dens_df$density)
+
+```
+
+## Combined Averages Obscure True Purchasing Behavior
+
+:::: {.columns}
+
+::: {.column width="50%"}
+**Combined Prediction Distribution**
+
+* Blends purchase likelihood and volume.
+* Obscures the reality of how this client buys.
+
+```{r}
+#| fig-width: 5
+#| fig-height: 3.5
+df |>
+    ggplot(aes(x = amount)) +
+    geom_histogram(binwidth = 5, fill = my_colors["Stable"], color = "white") +
+    scale_y_continuous(expand = expansion(mult = c(0, 0.05))) +
+    theme_minimal(base_size = 18) +
+    theme(axis.line.x = element_line(color = "gray30", linewidth = 0.8)) +
+    labs(x = "Predicted Order Volume", y = "Frequency")
+
+```
+
+:::
+
+::: {.column width="50%"}
+**Separated Two-Stage Distribution**
+
+* Isolates the "If they buy, how much?" question.
+* Reveals a normal, predictable operational volume.
+
+```{r}
+#| fig-width: 5
+#| fig-height: 3.5
+df |>
+    filter(amount > 0) |>
+    ggplot(aes(x = amount)) +
+    geom_histogram(binwidth = 5, fill = my_colors["Capri"], color = "white") +
+    scale_y_continuous(expand = expansion(mult = c(0, 0.05))) +
+    theme_minimal(base_size = 18) +
+    theme(axis.line.x = element_line(color = "gray30", linewidth = 0.8)) +
+    labs(x = "Predicted Order Volume", y = "Frequency")
+
+```
+
+:::
+
+::::
+
+::: {.notes}
+When we run our prediction model for an individual customer, the output isn't a single number. We are actually predicting two distinct behaviors: First, what is the probability this specific client will place an order at all? Second, if they do convert, what is their normal order volume? If we just look at historical averages, the reality of how this individual client buys is completely obscured. Presenting the two-stage model output allows us to isolate those two behaviors so we can address them separately.
+:::
+
+## Combined Expectations Predict Volumes Customers Will Never Buy
+
+* The combined expected value ($E[Y] \approx `r round(exp_total, 1)`$) falls in a gap.
+* This customer will likely purchase around **`r round(exp_positive, 1)`** units, or they buy nothing.
+* *(Note: The solid spike shows the probability mass of churn, while the curve shows the density of order volumes for buyers.)*
+
+```{r}
+#| fig-width: 9
+#| fig-height: 4
+ggplot() +
+    # The Zero Spike
+    geom_col(aes(x = 0, y = spike_height), width = spike_width, fill = my_colors["Stable"], alpha = 0.85) +
+
+    # The Positive Density Ribbon
+    geom_ribbon(data = dens_df, aes(x = amount, ymin = 0, ymax = density), fill = my_colors["Capri"], alpha = 0.6) +
+    geom_line(data = dens_df, aes(x = amount, y = density), color = my_colors["Stable"], linewidth = 1) +
+
+    # Expectation Lines
+    geom_vline(xintercept = exp_total, color = my_colors["Churn (Zero)"], linetype = "dashed", linewidth = 1.2) +
+    geom_vline(xintercept = exp_positive, color = my_colors["Stable"], linewidth = 1.2) +
+
+    # Annotations (Expectations)
+    annotate("text",
+        x = exp_total - 3, y = max_dens * 1.15,
+        label = paste("Combined Expectation\n~", round(exp_total, 1)),
+        color = my_colors["Churn (Zero)"], fontface = "bold", hjust = 1, vjust = 0
+    ) +
+    annotate("text",
+        x = exp_positive + 3, y = max_dens * 1.15,
+        label = paste("Positive Expectation\n~", round(exp_positive, 1)),
+        color = my_colors["Stable"], fontface = "bold", hjust = 0, vjust = 0
+    ) +
+
+    # Annotation (Individual Probability of No Purchase)
+    annotate("text",
+        x = spike_width + 2, y = spike_height * 0.85,
+        label = paste0("Probability of\nNo Purchase\n(~", round(p_zero * 100), "%)"),
+        color = "gray30", fontface = "italic", hjust = 0
+    ) +
+
+    # Force flush to the bottom, leave 15% padding at the top for labels
+    scale_y_continuous(expand = expansion(mult = c(0, 0.15))) +
+
+    # Clean Styling & X-Axis Line
+    theme_minimal(base_size = 18) +
+    theme(
+        axis.text.y = element_blank(),
+        axis.ticks.y = element_blank(),
+        panel.grid.major.y = element_blank(),
+        panel.grid.minor.y = element_blank(),
+        axis.line.x = element_line(color = "gray30", linewidth = 0.8)
+    ) +
+    labs(x = "Predicted Order Volume", y = "")
+
+```
+
+::: {.notes}
+Here is the danger of handing a sales rep a single 'expected value' to guide their account plan. For this specific customer, the model indicates a 35% probability of no purchase—that is the solid spike on the left. However, if they do buy, their normal operational volume is around 80 units. If we mathematically combine those two facts, the system tells the rep to expect an order of ~52 units. The problem? This customer will never buy 52 units. Giving the rep the combined expectation sets them up to pitch the wrong volume to a client who might actually just need a basic retention push.
+:::
+
+## Combined Models Falsely Flag Churn as Account Decline
+
+By mapping the account health categories directly onto the separated distributions (assuming a baseline of 80 units), we can clearly see our primary risk is strictly conversion (churn).
+
+> **Bottom Line for Sales:** Combined predictions flag churn as 'Decline', leading to unnecessary volume discounts.
+
+```{r}
+#| fig-width: 9
+#| fig-height: 4
+
+label_df <- tibble(
+    x = c(0, last_year_val * 0.8, last_year_val, last_year_val * 1.25),
+    y = c(spike_height * 0.5, max_dens * 0.2, max_dens * 0.4, max_dens * 0.2),
+    label = c(percent(prop_churn, accuracy = 1), percent(prop_decline, accuracy = 1), percent(prop_stable, accuracy = 1), percent(prop_growth, accuracy = 1))
+)
+
+ggplot() +
+    # The Zero Spike (CHURN)
+    geom_col(aes(x = 0, y = spike_height, fill = "Churn (Zero)"), width = spike_width, alpha = 0.95) +
+
+    # The Positive Density Ribbon (Colored by Growth/Stable/Decline)
+    geom_ribbon(data = dens_df, aes(x = amount, ymin = 0, ymax = density, fill = Category), alpha = 0.85) +
+
+    # A thin line to define the curve's upper edge
+    geom_line(data = dens_df, aes(x = amount, y = density), color = "white", linewidth = 0.5) +
+
+    # Text Overlays for Proportions using ggrepel
+    geom_label_repel(
+        data = label_df, aes(x = x, y = y, label = label),
+        color = "gray15", fill = "white", fontface = "bold", size = 4.5,
+        label.size = 0, label.padding = unit(0.3, "lines"),
+        min.segment.length = 0, box.padding = 0.5
+    ) +
+
+    # Apply the custom color palette
+    scale_fill_manual(
+        name = "Account Health\n(Relative to Y_t-1 = 80)",
+        values = my_colors
+    ) +
+
+    # Force the bottom of the plot to sit exactly at y = 0
+    scale_y_continuous(expand = expansion(mult = c(0, 0.05))) +
+
+    # Clean Styling & X-Axis Line
+    theme_minimal(base_size = 18) +
+    theme(
+        axis.text.y = element_blank(), axis.ticks.y = element_blank(),
+        panel.grid.major.y = element_blank(), panel.grid.minor.y = element_blank(),
+        legend.position = "right",
+        axis.line.x = element_line(color = "gray30", linewidth = 0.8)
+    ) +
+    labs(x = "Predicted Order Volume", y = "")
+
+```
+
+::: {.notes}
+Let's say this customer bought 80 units last year. How do we flag their account health in the CRM? If we use the combined expectation of 52, our dashboard flags them as 'Declining'. A rep seeing a 'Declining' tag might panic and offer unnecessary volume discounts. But look at the two-stage model's separated reality: if we get them to buy, their volume is highly likely to remain 'Stable' or even hit 'Growth'. The real risk isn't that their operational needs are shrinking; the risk is the 35% probability they churn entirely. The rep's goal shouldn't be negotiating order size—it must be purely focused on securing the renewal.
+:::
+
+
+## Combined Presentations Create an Illusion of Systemic Decline
+
+> **Bottom Line for Sales:** 0 is less than 80, so combined systems paint churned accounts and shrinking active accounts with the same brush.
+
+```{r}
+#| fig-width: 10
+#| fig-height: 5
+
+# Plot A: The Naive Business Rule (The Illusion)
+# Here, the zero-spike is treated as just a very severe "Decline"
+ggplot() +
+    geom_col(aes(x = 0, y = spike_height, fill = "Decline"), width = spike_width, alpha = 0.95) +
+    geom_ribbon(data = dens_df, aes(x = amount, ymin = 0, ymax = density, fill = Category), alpha = 0.85) +
+    geom_line(data = dens_df, aes(x = amount, y = density), color = "white", linewidth = 0.5) +
+    geom_vline(xintercept = last_year_val, color = "black", linetype = "dashed") +
+    annotate("text",
+        x = last_year_val + 5, y = max_dens * 0.8,
+        label = "Previous Year\n(80 Units)", hjust = 0, fontface = "italic"
+    ) +
+    scale_fill_manual(values = my_colors) +
+    scale_y_continuous(expand = expansion(mult = c(0, 0.1))) +
+    theme_minimal(base_size = 16) +
+    theme(
+        axis.text.y = element_blank(), axis.ticks.y = element_blank(),
+        panel.grid.major.y = element_blank(), panel.grid.minor.y = element_blank(),
+        axis.line.x = element_line(color = "gray30", linewidth = 0.8),
+        legend.position = "none" # Hide legend to keep focus on the colors
+    ) +
+    labs(
+        title = "Naive Business Rules: Treating Non-Buyers as 'Decline'",
+        x = "", y = ""
+    )
+```
+
+::: {.notes}
+Look at this chart. If we feed the full, un-separated distribution into our CRM and apply our health categories, the massive weight of the zero-buyers drags the entire curve to the left. The system flags almost the entire portfolio as 'Declining' (the dark purple). If I am a sales leader looking at this, I am firing my account managers because it looks like every single customer is slowly abandoning us.
+:::
+
+## Two-Stage Presentations Isolate True Churn Risk
+
+> **Bottom Line for Sales:** We don't have a systemic 'Decline' problem. Active buyers are healthy. Our only real problem is the 35% who churn entirely.
+
+```{r}
+#| fig-width: 10
+#| fig-height: 5
+
+# Plot B: The Two-Stage Reality (Isolating Churn)
+# Here, the exact same zero-spike is isolated as "Churn"
+ggplot() +
+    geom_col(aes(x = 0, y = spike_height, fill = "Churn (Zero)"), width = spike_width, alpha = 0.95) +
+    geom_ribbon(data = dens_df, aes(x = amount, ymin = 0, ymax = density, fill = Category), alpha = 0.85) +
+    geom_line(data = dens_df, aes(x = amount, y = density), color = "white", linewidth = 0.5) +
+    geom_vline(xintercept = last_year_val, color = "black", linetype = "dashed") +
+    scale_fill_manual(values = my_colors) +
+    scale_y_continuous(expand = expansion(mult = c(0, 0.1))) +
+    theme_minimal(base_size = 16) +
+    theme(
+        axis.text.y = element_blank(), axis.ticks.y = element_blank(),
+        panel.grid.major.y = element_blank(), panel.grid.minor.y = element_blank(),
+        axis.line.x = element_line(color = "gray30", linewidth = 0.8),
+        legend.position = "bottom",
+        legend.title = element_blank()
+    ) +
+    labs(
+        title = "Two-Stage Model Reality: Separating the Hurdle",
+        x = "Predicted Order Volume", y = ""
+    )
+```
+
+::: {.notes}
+Now look at this chart—the exact same underlying data, but presented clearly using the two-stage model outputs. The truth is revealed. We do not have a systemic 'Decline' problem. Our active buyers (the blue and green areas) are healthy, stable, and growing. Our only actual problem is the raspberry wall on the left: Churn.
+
+This changes everything. We shouldn't be giving broad volume discounts to save 'declining' accounts; we should be launching a targeted win-back campaign for the 35% who are walking out the door entirely.
+:::
+
+
+## Two-Metric Segmentation Directs Sales Effort Where It Matters Most
+
+:::: {.columns}
+
+::: {.column width="60%"}
+
+```{r}
+#| fig-width: 6.5
+#| fig-height: 5
+
+# Generate synthetic territory data (e.g., 150 accounts a rep manages)
+set.seed(123)
+territory_df <- tibble(
+    account_id = 1:150,
+    prob_buy = runif(150, 0.2, 0.95), # Probability of purchase (1 - P_zero)
+    exp_vol = rnorm(150, mean = 80, sd = 25) # Conditional expected volume
+) |>
+    # Define the quadrants based on median or business-logic splits
+    mutate(
+        Action = case_when(
+            prob_buy < 0.6 & exp_vol >= 80 ~ "Flight Risk VIPs\n(Intervene)",
+            prob_buy >= 0.6 & exp_vol >= 80 ~ "Core Pipeline\n(Protect & Upsell)",
+            prob_buy < 0.6 & exp_vol < 80 ~ "Low Priority\n(Automate)",
+            prob_buy >= 0.6 & exp_vol < 80 ~ "Steady Builders\n(Expand Volume)"
+        ),
+        Action = factor(Action, levels = c("Flight Risk VIPs\n(Intervene)", "Core Pipeline\n(Protect & Upsell)", "Steady Builders\n(Expand Volume)", "Low Priority\n(Automate)"))
+    )
+
+# Define quadrant colors using your palette
+quad_colors <- c(
+    "Flight Risk VIPs\n(Intervene)" = my_colors[["Churn (Zero)"]], # Raspberry
+    "Core Pipeline\n(Protect & Upsell)" = my_colors[["Growth"]], # Chartreuse
+    "Steady Builders\n(Expand Volume)" = my_colors[["Capri"]], # Capri
+    "Low Priority\n(Automate)" = my_colors[["Decline"]] # Dark Purple
+)
+
+territory_df |>
+    ggplot(aes(x = prob_buy, y = exp_vol, color = Action)) +
+
+    # Background quadrant shading (subtle)
+    annotate("rect", xmin = -Inf, xmax = 0.6, ymin = 80, ymax = Inf, fill = my_colors[["Churn (Zero)"]], alpha = 0.05) +
+    annotate("rect", xmin = 0.6, xmax = Inf, ymin = 80, ymax = Inf, fill = my_colors[["Growth"]], alpha = 0.05) +
+    annotate("rect", xmin = -Inf, xmax = 0.6, ymin = -Inf, ymax = 80, fill = my_colors[["Decline"]], alpha = 0.05) +
+    annotate("rect", xmin = 0.6, xmax = Inf, ymin = -Inf, ymax = 80, fill = my_colors[["Capri"]], alpha = 0.05) +
+
+    # Quadrant divider lines
+    geom_hline(yintercept = 80, linetype = "dashed", color = "gray50") +
+    geom_vline(xintercept = 0.6, linetype = "dashed", color = "gray50") +
+
+    # The scatter points
+    geom_point(size = 3, alpha = 0.8) +
+
+    # Apply colors
+    scale_color_manual(values = quad_colors) +
+
+    # Formatting
+    scale_x_continuous(labels = percent) +
+    theme_minimal(base_size = 18) +
+    theme(
+        legend.position = "bottom",
+        legend.title = element_blank(),
+        panel.grid.minor = element_blank(),
+        legend.margin = margin(t = -10)
+    ) +
+    labs(
+        x = "Likelihood to Purchase",
+        y = "Expected Conditional Volume"
+    )
+```
+
+:::
+
+::: {.column width="40%"}
+
+<br>
+<br>
+
+**The Dimensions of Execution**
+
+* A combined average only allows reps to sort accounts from large to small.
+* Two-stage outputs provide two specific dimensions, unlocking precise account segmentation.
+* Immediately identifies **Flight Risks** vs **Steady Builders**, ensuring time is spent where it yields highest return.
+
+:::
+
+::::
+
+::: {.notes}
+By presenting the unblended expected values, we don't just get better math; we get better execution. If we only give a sales rep a single, combined metric, they treat a stable 50-unit buyer exactly the same as a 100-unit buyer who has a 50% chance of churning.
+
+But when we map the two metrics into a matrix, it becomes a strategic goldmine. The rep knows exactly where to spend their time. The Raspberry accounts in the top left are our 'Flight Risk VIPs'—they require immediate, high-touch phone calls. Meanwhile, 'Low Priority' accounts in the bottom left can be pushed to an automated marketing drip. This ensures a rep's time is spent where it matters most: protecting the core pipeline and expanding the steady builders.
+:::
+
+## Align the Two-Stage Model with Individual Sales Execution
+
+| Feature | ❌ Combined Distribution $E[Y]$ | ✅ **Two-Stage Separated $P(Y=0)$ & $E[Y|Y>0]$** |
+| :--- | :--- | :--- |
+| **Reality** | Blends conversion risk with volume. | **Isolates conversion risk from order magnitude.** |
+| **Output** | Smoothed, combined volume. | **Likelihood to buy, and conditional volume.** |
+| **Best For** | Macro-level forecasting. | **Micro-level execution.** |
+| **The Risk** | Promotes under-pitching buyers. | **Requires managing two metrics instead of one.** |
+
+::: {.notes}
+Ultimately, combining the output and keeping it separated serve different masters. The Combined Distribution is for the aggregate business—it is what our supply chain and finance teams use, because across thousands of customers, the individual churn probabilities smooth out into predictable revenue. But for Sales execution, we must present the Separated approach. We need to arm our reps with two distinct metrics per account: the Conversion Risk to drive retention tactics, and the Conditional Volume to drive their quota and upsell targets.
+:::
