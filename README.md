@@ -1,49 +1,52 @@
-# R PowerPoint Report Generator
+# RReport: Presentation Design & Generation
 
-This project automates the creation of professional PowerPoint reports using R and the `officer` package.
-It supports advanced features like formatted tables (`flextable`), editable vector graphics (`rvg`), and custom layouts (`patchwork`).
+This project automates the creation of professional PowerPoint reports and presentations. It combines a Markdown-based authoring workflow via Quarto (`.qmd`) with robust R-based utility scripts (`officer` package) for template manipulation and data-heavy slide generation.
 
-## Files in this Repository
+## Design Principles
 
-| File | Description |
-| :--- | :--- |
-| **`create_template.R`** | Generates `template.pptx`. Can take an existing `.pptx` as an argument to strip its slides and create a "pure" template from its layouts. |
-| **`generate_report.R`** | The main script. Sources `report_functions.R` and orchestrates the report generation. |
-| **`report_functions.R`** | Contains generalized helper functions (`add_title_slide`, `get_slide_inventory`, etc.) to handle custom layouts and masters. |
-| **`inspect_template.R`** | A helper script to inspect any `.pptx` file to find Layout Names, Master Names, and a Slide-by-Slide Inventory. |
+We prioritize lean presentation design. For full guidelines, see the automated rules in the `.agent/rules/` directory. Core principles include:
+- **Clarity over embellishment**: Keep slides lean.
+- **Assertion-Evidence Structure**: Slide titles must be assertions (complete sentences making a point) supported by visual evidence.
+- **Visual hierarchy**: Direct the viewer's eye to the critical information.
 
-## Usage
+## Project Structure
 
-### 1. Generate or Customize the Template
-Run the template creation script to get a starter file:
+- `present/`: Contains the Quarto authoring files (`.qmd`), Quarto configurations (`_quarto.yml`), and presentation-specific assets.
+- `tools/`: Contains R utility scripts for generating templates, inspecting slide layouts, and generating reports programmatically.
+- `templates/`: Contains `.pptx` template files used as the foundation by both Quarto and the R utilities.
+
+## Workflows and Usage
+
+### 1. Presentation Authoring (Quarto)
+To quickly draft and preview the main presentation in `present/presentation.qmd`:
 ```bash
-Rscript create_template.R
+quarto preview present/presentation.qmd
 ```
-Or create a template from an existing corporate presentation:
+*Note*: This relies on `templates/template.pptx` for structural formatting.
+
+### 2. Template Utilities (R)
+The scripts in `tools/` manage the underlying templates used across this project.
+
+**Generate a Clean Template**
+Create a base `templates/template.pptx` from scratch, or strip an existing corporate presentation to create a layout-only template:
 ```bash
-Rscript create_template.R corporate_slides.pptx
+Rscript tools/create_template.R
+# Or with an existing file:
+# Rscript tools/create_template.R my_corporate_slides.pptx
 ```
-This creates a slide-free `template.pptx` while preserving all branding and layouts.
 
-### 2. Inspect a Template
-Use `inspect_template.R` to identify the correct layout names and see what's inside a file:
+**Inspect a Template**
+Identify the correct Layout Names and Master Names within any template. This is crucial for both Quarto YAML configs and R generation scripts.
 ```bash
-Rscript inspect_template.R
-# Or specify a file:
-# Rscript inspect_template.R my_presentation.pptx
+Rscript tools/inspect_template.R templates/template.pptx
 ```
-This outputs a layout summary and a detailed **Slide-by-Slide Inventory** (Index, Layout, Master, and Title).
 
-### 3. Generate the Report
-Run the main report generation script:
+### 3. Programmatic Report Generation (R)
+For data-heavy deliverables, run the main report generation script. This produces `templates/report.pptx` with automated plots and tables:
 ```bash
-Rscript generate_report.R
+Rscript tools/generate_report.R
 ```
-This produces `report.pptx` with automated plots, tables, and a demonstration of generalized function parameters.
 
-## Advanced Features
-*   **Generalized Functions:** All `add_*_slide` functions in `report_functions.R` allow passing custom `layout` and `master` names.
-*   **Editable Graphics:** Plots are inserted as vector graphics (`rvg`), allowing you to ungroup and edit them in PowerPoint.
-*   **Clean Output:** All scripts use `suppressPackageStartupMessages()` for a clean console experience.
-*   **Inventory Logic:** Reusable functions in `report_functions.R` (`get_layout_summary`, `get_slide_inventory`) for programmatic inspection.
-
+## Advanced R Features
+* **Generalized Functions:** All `add_*_slide` functions in `tools/report_functions.R` allow passing custom `layout` and `master` names.
+* **Editable Graphics:** Plots are inserted as vector graphics (`rvg`), allowing you to ungroup and edit them in natively via PowerPoint.

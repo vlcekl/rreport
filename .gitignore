@@ -3,6 +3,7 @@
 *.html
 
 presentation_files/
+README_files/
 
 .Rhistory
 .RData

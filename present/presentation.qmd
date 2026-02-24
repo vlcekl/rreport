@@ -8,7 +8,7 @@ format:
     preview-links: auto
   pptx:
     # Remove the '#' on the next line and point it to a corporate PPTX file to use its template
-    # reference-doc: template.pptx
+    # reference-doc: ../templates/template.pptx
     slide-level: 2
 execute:
   echo: false

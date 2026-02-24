@@ -12,7 +12,7 @@ if (!is.null(source_pptx)) {
   }
   cat(paste("Creating template from existing file:", source_pptx, "\n"))
   doc <- read_pptx(source_pptx)
-  
+
   # Remove all existing slides to make it a "pure" template
   num_slides <- length(doc)
   if (num_slides > 0) {
@@ -31,6 +31,5 @@ cat("\nAvailable Layouts in Template:\n")
 print(layout_summary(doc))
 
 # Save the template
-print(doc, target = "template.pptx")
-cat("\nTemplate saved as 'template.pptx'.\n")
-
+print(doc, target = "templates/template.pptx")
+cat("\nTemplate saved as 'templates/template.pptx'.\n")

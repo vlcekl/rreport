@@ -1,12 +1,12 @@
 # Source the modular functions (provides officer, dplyr)
-source("report_functions.R")
+source("tools/report_functions.R")
 
 # Set console width to prevent table wrapping
 options(width = 200)
 
 # --- Argument Handling ---
 args <- commandArgs(trailingOnly = TRUE)
-target_pptx <- if (length(args) > 0) args[1] else "report.pptx" 
+target_pptx <- if (length(args) > 0) args[1] else "templates/template.pptx"
 
 # --- Inspection Logic ---
 
@@ -40,4 +40,3 @@ if (!is.null(inventory_clean)) {
 }
 
 cat("\nTip: Use 'inspect_template.R' to identify exactly which layouts are being used in an existing presentation.\n")
-

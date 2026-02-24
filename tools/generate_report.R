@@ -1,5 +1,5 @@
 # Source the modular functions (provides officer, dplyr)
-source("report_functions.R")
+source("tools/report_functions.R")
 
 suppressPackageStartupMessages(library(ggplot2))
 suppressPackageStartupMessages(library(flextable))
@@ -7,10 +7,12 @@ suppressPackageStartupMessages(library(rvg))
 suppressPackageStartupMessages(library(patchwork))
 
 # Standard styling
-theme_set(theme_bw(base_size = 14) + 
-          theme(plot.title = element_text(size = 16, face = "bold"),
-                axis.title = element_text(size = 14),
-                axis.text = element_text(size = 12)))
+theme_set(theme_bw(base_size = 14) +
+  theme(
+    plot.title = element_text(size = 16, face = "bold"),
+    axis.title = element_text(size = 14),
+    axis.text = element_text(size = 12)
+  ))
 
 # --- Data Generation ---
 set.seed(42)
@@ -29,7 +31,7 @@ comp_data <- data.frame(
   Metric = c("Revenue", "Cost", "Profit", "Margin"),
   Value = c(100000, 60000, 40000, "40%")
 )
-heat_data_basic <- expand.grid(x = 1:10, y = 1:10) |> mutate(z = rnorm(n(), mean = x+y))
+heat_data_basic <- expand.grid(x = 1:10, y = 1:10) |> mutate(z = rnorm(n(), mean = x + y))
 
 # 3. Product Data (Advanced Table)
 product_data <- data.frame(
@@ -53,7 +55,9 @@ p_hist <- ggplot(hist_data, aes(x = value)) +
   labs(title = "Distribution Analysis", x = "Value")
 
 p_heat_basic <- ggplot(heat_data_basic, aes(x = x, y = y, fill = z)) +
-  geom_tile() + scale_fill_viridis_c() + labs(title = "Correlation Map")
+  geom_tile() +
+  scale_fill_viridis_c() +
+  labs(title = "Correlation Map")
 
 p_pie <- ggplot(pie_data, aes(x = "", y = Share, fill = Category)) +
   geom_col(color = "white") +
@@ -80,34 +84,40 @@ ft_full <- flextable(product_data) |>
   autofit()
 
 p_adv1 <- ggplot(heat_data1, aes(x = Quarter, y = Region, fill = Sales)) +
-  geom_tile() + scale_fill_viridis_c(option = "magma") + theme_minimal()
+  geom_tile() +
+  scale_fill_viridis_c(option = "magma") +
+  theme_minimal()
 p_adv2 <- ggplot(heat_data2, aes(x = Quarter, y = Region, fill = Score)) +
-  geom_tile() + scale_fill_viridis_c(option = "viridis") + theme_minimal()
+  geom_tile() +
+  scale_fill_viridis_c(option = "viridis") +
+  theme_minimal()
 
 combined_heatmaps <- p_adv1 + p_adv2 + plot_annotation(title = "Regional Sales vs Satisfaction")
 
 # Dynamic Text
-summary_text <- sprintf("Report Generated: %s\nTotal Revenue Analyzed: $%s\nTop Growth Product: %s", 
-                        Sys.Date(), 
-                        format(sum(product_data$Revenue), big.mark=","),
-                        product_data$Product[which.max(product_data$Growth)])
+summary_text <- sprintf(
+  "Report Generated: %s\nTotal Revenue Analyzed: $%s\nTop Growth Product: %s",
+  Sys.Date(),
+  format(sum(product_data$Revenue), big.mark = ","),
+  product_data$Product[which.max(product_data$Growth)]
+)
 
 # --- Report Generation ---
 
-if (!file.exists("template.pptx")) {
-  stop("template.pptx not found! Please run create_template.R first.")
+if (!file.exists("templates/template.pptx")) {
+  stop("templates/template.pptx not found! Please run create_template.R first.")
 }
-doc <- read_pptx("template.pptx")
+doc <- read_pptx("templates/template.pptx")
 
 # 1. Title Slide
-doc <- add_title_slide(doc, 
-  title = "Comprehensive Business Intelligence Report", 
+doc <- add_title_slide(doc,
+  title = "Comprehensive Business Intelligence Report",
   subtitle = paste("Generated on", Sys.Date())
 )
 
 # 2. Executive Summary
-doc <- add_summary_slide(doc, 
-  title = "Executive Summary", 
+doc <- add_summary_slide(doc,
+  title = "Executive Summary",
   text = summary_text
 )
 
@@ -149,7 +159,7 @@ doc <- add_comparison_slide(doc,
   right_content = ft_comp
 )
 
-  doc <- add_full_content_slide(doc,
+doc <- add_full_content_slide(doc,
   title = "Detailed Product Revenue & Growth",
   content = ft_full
 )
@@ -164,5 +174,5 @@ doc <- add_summary_slide(doc,
 )
 
 # Save Report
-print(doc, target = "report.pptx")
-cat("Consolidated comprehensive report generated successfully as 'report.pptx'.\n")
+print(doc, target = "templates/report.pptx")
+cat("Consolidated comprehensive report generated successfully as 'templates/report.pptx'.\n")
