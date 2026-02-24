@@ -10,3 +10,5 @@ README_files/
 
 /.quarto/
 **/*.quarto_ipynb
+.venv/
+import/
