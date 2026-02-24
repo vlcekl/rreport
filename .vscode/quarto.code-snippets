@@ -1,0 +1,39 @@
+{
+    "Quarto: Two Columns (50/50)": {
+        "prefix": "qcol2",
+        "body": [
+            ":::: {.columns}",
+            "",
+            "::: {.column width=\"50%\"}",
+            "$1",
+            ":::",
+            "",
+            "::: {.column width=\"50%\"}",
+            "$2",
+            ":::",
+            "",
+            "::::"
+        ],
+        "description": "Insert a standard two-column RevealJS layout"
+    },
+    "Quarto: Speaker Notes": {
+        "prefix": "qnote",
+        "body": [
+            "::: {.notes}",
+            "$1",
+            ":::"
+        ],
+        "description": "Insert speaker notes to accompany the slide"
+    },
+    "Quarto: Incremental List": {
+        "prefix": "qinc",
+        "body": [
+            "::: {.incremental}",
+            "- $1",
+            "- $2",
+            "- $3",
+            ":::"
+        ],
+        "description": "Insert an incremental build list"
+    }
+}

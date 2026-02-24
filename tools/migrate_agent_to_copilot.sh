@@ -45,12 +45,34 @@ else
     echo "-> No rules directory found. Skipping."
 fi
 
+# Helper function to conditionally copy files
+copy_if_newer() {
+    local src_dir="$1"
+    local dest_dir="$2"
+    
+    # Find all files recursively in the source directory
+    find "$src_dir" -type f | while read -r src_file; do
+        # Calculate the destination path
+        local rel_path="${src_file#$src_dir/}"
+        local dest_file="$dest_dir/$rel_path"
+        
+        # Ensure destination subdirectory exists
+        mkdir -p "$(dirname "$dest_file")"
+        
+        # Check if destination exists and if source is newer
+        if [ ! -f "$dest_file" ] || [ "$src_file" -nt "$dest_file" ]; then
+            cp "$src_file" "$dest_file"
+            echo "-> Updated: $dest_file"
+        else
+            echo "-> Skipped (destination is newer): $dest_file"
+        fi
+    done
+}
+
 # 3. Copy Skills
 echo "Copying skills..."
 if [ -d "$AGENT_DIR/skills" ]; then
-    # We copy the contents of the skills directory
-    cp -r "$AGENT_DIR"/skills/* "$GITHUB_DIR/skills/" 2>/dev/null || true
-    echo "-> Skills copied to $GITHUB_DIR/skills/"
+    copy_if_newer "$AGENT_DIR/skills" "$GITHUB_DIR/skills"
 else
     echo "-> No skills directory found. Skipping."
 fi
@@ -58,8 +80,7 @@ fi
 # 4. Copy Workflows
 echo "Copying workflows..."
 if [ -d "$AGENT_DIR/workflows" ]; then
-    cp -r "$AGENT_DIR"/workflows/* "$GITHUB_DIR/workflows/" 2>/dev/null || true
-    echo "-> Workflows copied to $GITHUB_DIR/workflows/"
+    copy_if_newer "$AGENT_DIR/workflows" "$GITHUB_DIR/workflows"
 else
     echo "-> No workflows directory found. Skipping."
 fi

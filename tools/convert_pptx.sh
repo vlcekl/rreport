@@ -9,14 +9,27 @@ set -e
 
 # --- Configuration ---
 SOURCE_FILE="$1"
-# Ensure we have an input
+# Ensure we have an input, or find the newest one
 if [ -z "$SOURCE_FILE" ]; then
-    echo "Usage: ./tools/convert_pptx.sh <path_to_pptx_file>"
-    echo "Example: ./tools/convert_pptx.sh import/pptx/my_presentation.pptx"
-    exit 1
+    echo "No input file provided. Searching for newest .pptx in import/pptx/..."
+    
+    # Use ls -t to sort by time, grep for pptx, head -n 1 to get the newest
+    NEWEST_PPTX=$(ls -t import/pptx/*.pptx 2>/dev/null | head -n 1)
+    
+    if [ -z "$NEWEST_PPTX" ]; then
+        echo "Error: No .pptx files found in import/pptx/."
+        echo "Usage: ./tools/convert_pptx.sh [path_to_pptx_file]"
+        exit 1
+    fi
+    
+    SOURCE_FILE="$NEWEST_PPTX"
+    echo "Auto-selected: $SOURCE_FILE"
 fi
 
 if [ ! -f "$SOURCE_FILE" ]; then
+    echo "Error: File '$SOURCE_FILE' not found."
+    exit 1
+fi
     echo "Error: File '$SOURCE_FILE' not found."
     exit 1
 fi
