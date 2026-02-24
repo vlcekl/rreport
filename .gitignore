@@ -6,3 +6,6 @@ presentation_files/
 
 .Rhistory
 .RData
+
+/.quarto/
+**/*.quarto_ipynb
