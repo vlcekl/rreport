@@ -3,6 +3,7 @@
 *.html
 
 presentation_files/
+assets/
 README_files/
 
 .Rhistory
