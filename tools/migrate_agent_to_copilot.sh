@@ -20,7 +20,7 @@ fi
 # 1. Create .github structure
 echo "Preparing $GITHUB_DIR directory..."
 mkdir -p "$GITHUB_DIR/skills"
-mkdir -p "$GITHUB_DIR/workflows"
+mkdir -p "$GITHUB_DIR/prompts"
 
 # 2. Concatenate rules into copilot-instructions.md
 echo "Compiling rules into $COPILOT_FILE..."
@@ -78,9 +78,9 @@ else
 fi
 
 # 4. Copy Workflows
-echo "Copying workflows..."
+echo "Copying workflows to prompts..."
 if [ -d "$AGENT_DIR/workflows" ]; then
-    copy_if_newer "$AGENT_DIR/workflows" "$GITHUB_DIR/workflows"
+    copy_if_newer "$AGENT_DIR/workflows" "$GITHUB_DIR/prompts"
 else
     echo "-> No workflows directory found. Skipping."
 fi

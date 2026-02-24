@@ -79,4 +79,4 @@ Copilot requires a different file structure. To sync the AI instructions so Copi
 ```bash
 ./tools/migrate_agent_to_copilot.sh
 ```
-This safely compiles the rules into `.github/copilot-instructions.md` and copies the relevant skills to `.github/skills/` for easy referencing in your Copilot Chat.
+This safely compiles the rules into `.github/copilot-instructions.md` and copies the relevant skills to `.github/skills/` and workflows to `.github/prompts/` for easy referencing in your Copilot Chat.
