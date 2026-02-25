@@ -479,3 +479,114 @@ Instead of a single blended metric, we propose delivering a three-pillar formatt
 ::: {.notes}
 This is what the final delivery to the field should look like. By structuring the predictions this way, we remove the ambiguity of the blended average. An account manager looking at Account #84729 knows immediately they don't need to offer a volume discount to save a 'declining' account; they need to intervene right now to prevent a catastrophic churn event. Because if #84729 does renew, their underlying operational volume is actually growing. This format turns predictive math directly into actionable sales strategy.
 :::
+
+## The Classification Problem: Misallocated Effort
+
+A combined model forces a **False Positive** crisis by flagging healthy accounts as "Declining" due to their churn probability dragging down the average.
+
+:::: {.columns}
+
+::: {.column width="40%"}
+<br>
+**The Illusion of Decay**
+
+*   Predicting a combined volume of ~`r round(exp_total, 0)` units for an account that historically bought 80 categorizes them as **Declining**.
+*   **Combined:** 100% False Positive rate for 'Decline'.
+*   **Two-Stage:** Perfectly separates true operational growth/decline from pure churn risk.
+
+:::
+
+::: {.column width="60%"}
+
+```{r}
+#| fig-width: 6.5
+#| fig-height: 4.5
+class_df <- tibble(
+    Model = c(rep("Combined\n(Forced Average)", 4), rep("Two-Stage\n(Separated Truth)", 4)),
+    Category = rep(c("Churn", "Decline", "Stable", "Growth"), 2),
+    Percentage = c(
+        0, 100, 0, 0,
+        p_zero * 100, prop_decline * 100, prop_stable * 100, prop_growth * 100
+    )
+) |>
+    mutate(Category = factor(Category, levels = c("Churn", "Decline", "Stable", "Growth")))
+
+ggplot(class_df, aes(x = Model, y = Percentage, fill = Category)) +
+    geom_col(position = "stack", width = 0.6) +
+    scale_fill_manual(values = c(
+        "Churn" = my_colors[["Churn (Zero)"]],
+        "Decline" = my_colors[["Decline"]],
+        "Stable" = my_colors[["Stable"]],
+        "Growth" = my_colors[["Growth"]]
+    )) +
+    geom_text(aes(label = ifelse(Percentage > 5, paste0(round(Percentage), "%"), "")),
+        position = position_stack(vjust = 0.5), color = "white", fontface = "bold", size = 5
+    ) +
+    theme_minimal(base_size = 18) +
+    labs(x = "", y = "Portfolio %") +
+    theme(
+        legend.position = "right",
+        legend.title = element_blank(),
+        axis.line.x = element_line(color = "black", linewidth = 0.8),
+        panel.grid.major.x = element_blank()
+    )
+```
+
+:::
+
+::::
+
+::: {.notes}
+Let's look at why combining these predictions is so dangerous from a classification standpoint. If we look at the chart on the left, our combined model is predicting 52 units for an account that historically bought 80. The system looks at that drop and flags the account as 'Declining'. In fact, because of the heavy weight of the churn probability, it flags almost 100% of these accounts as declining! This is a massive False Positive crisis. Sales reps will waste hours negotiating volume discounts to save accounts that actually just need an executive sponsor check-in to prevent them from churning entirely. By using the two-stage model on the right, we perfectly separate true operational growth and decline from pure churn risk, ensuring our reps allocate their time effectively.
+:::
+
+## The Regression Problem: Mathematical Certainty of Error
+
+A combined model predicts a mathematical expected value that **never occurs in reality** for a bimodal (buy/no-buy) distribution.
+
+:::: {.columns}
+
+::: {.column width="40%"}
+<br>
+**Guaranteed to be Wrong**
+
+*   Predicting ~`r round(exp_total, 0)` units guarantees error: it misses non-buyers by `r round(exp_total, 0)`, and actual buyers by `r round(abs(exp_positive - exp_total), 0)`.
+*   **Combined:** Stubbornly high Mean Absolute Error (MAE) portfolio-wide.
+*   **Two-Stage:** Evaluating Conditional MAE (active buyers only) gives Sales a highly accurate volume target.
+
+:::
+
+::: {.column width="60%"}
+```{r}
+#| fig-width: 6.5
+#| fig-height: 4.5
+mae_df <- tibble(
+    Metric = c("Combined Model\n(All Accounts)", "Two-Stage Model\n(Active Buyers Only)"),
+    MAE = c(mean(abs(df$amount - exp_total)), mean(abs(df$amount[df$amount > 0] - exp_positive)))
+) |>
+    mutate(Metric = factor(Metric, levels = c("Combined Model\n(All Accounts)", "Two-Stage Model\n(Active Buyers Only)")))
+
+ggplot(mae_df, aes(x = Metric, y = MAE, fill = Metric)) +
+    geom_col(width = 0.6) +
+    geom_text(aes(label = paste0(round(MAE, 1), " Units Off")), vjust = -0.6, fontface = "bold", size = 6, color = "gray20") +
+    scale_fill_manual(values = c(
+        "Combined Model\n(All Accounts)" = my_colors[["Decline"]],
+        "Two-Stage Model\n(Active Buyers Only)" = my_colors[["Capri"]]
+    )) +
+    scale_y_continuous(expand = expansion(mult = c(0, 0.25))) +
+    theme_minimal(base_size = 18) +
+    labs(y = "Mean Absolute Error (Units)", x = "") +
+    theme(
+        legend.position = "none",
+        axis.line.x = element_line(color = "black", linewidth = 0.8),
+        panel.grid.major.x = element_blank()
+    )
+```
+
+:::
+
+::::
+
+::: {.notes}
+Finally, let's look at the mathematical reality of our predictions. A combined model predicts an 'expected value'—in our case, 52 units. But remember, this is a bimodal distribution: the customer either buys nothing, or they buy around 80. They will *never* buy 52. Because of this, our combined prediction guarantees error. If they churn, we missed by 52 units. If they buy normally, we missed by 28 units. You can see this in the high Mean Absolute Error on the left. The two-stage model solves this. By evaluating the Conditional MAE—asking "If they buy, how much?"—we provide a highly accurate volume target that matches the account's operational reality. This gives Sales a completely defensible number to put in their forecast.
+:::
