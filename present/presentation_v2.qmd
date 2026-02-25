@@ -456,3 +456,26 @@ But when we map the two metrics into a matrix, it becomes a strategic goldmine. 
 ::: {.notes}
 Ultimately, combining the output and keeping it separated serve different masters. The Combined Distribution is for the aggregate business—it is what our supply chain and finance teams use, because across thousands of customers, the individual churn probabilities smooth out into predictable revenue. But for Sales execution, we must present the Separated approach. We need to arm our reps with two distinct metrics per account: the Conversion Risk to drive retention tactics, and the Conditional Volume to drive their quota and upsell targets.
 :::
+
+## Proposed Delivery Format: Actionable Client Insights
+
+Instead of a single blended metric, we propose delivering a three-pillar formatted view directly to the CRM for each account.
+
+| Account ID | Probability of Purchase | Expected Quantity (If Purch.) | Positive Outcome Trajectory |
+| :--- | :--- | :--- | :--- |
+| **#84729** | 🔴 35% *(Churn Risk)* | 85 Units | 🟩 **Growth** |
+| **#29384** | 🟢 95% *(Healthy)* | 100 Units | 🟦 **Stable** |
+| **#57102** | 🟢 88% *(Healthy)* | 40 Units | 🟪 **Decline** |
+| **#10485** | 🟡 60% *(At Risk)* | 150 Units | 🟩 **Growth** |
+
+<br>
+
+**Why this format works for Sales:**
+
+* **Probability of Purchase:** Isolates pure churn risk. Directs immediate retention workflows (e.g., Account #84729 needs an executive sponsor call, not a volume discount).
+* **Expected Quantity:** Provides the exact target volume the rep should pitch, unaffected by the zero-probability weight.
+* **Trajectory Category:** Flags an account's true operational momentum (Decline / Stable / Growth) *only* if they convert, preventing the illusion of systemic decline.
+
+::: {.notes}
+This is what the final delivery to the field should look like. By structuring the predictions this way, we remove the ambiguity of the blended average. An account manager looking at Account #84729 knows immediately they don't need to offer a volume discount to save a 'declining' account; they need to intervene right now to prevent a catastrophic churn event. Because if #84729 does renew, their underlying operational volume is actually growing. This format turns predictive math directly into actionable sales strategy.
+:::
